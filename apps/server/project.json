@@ -4,7 +4,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node apps/server/listen.js"
+        "command": "node apps/server/server.js"
       }
     }
   }
