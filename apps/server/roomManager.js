@@ -1,10 +1,10 @@
-import { generateRoomCode } from "./utils/roomCode";
+import { generateRoomCode } from "./utils/roomCode.js";
 
 // "MODEL" (rather than "Controller" - socket-handler)
 const rooms = {};
 const roomCode = generateRoomCode()
 
-function createRoom(roomCode, hostId) {
+export function createRoom(roomCode, hostId) {
     rooms[roomCode] = {
         host: hostId,
         players: {},    //{socketId: {nickname}}
@@ -12,14 +12,14 @@ function createRoom(roomCode, hostId) {
     };
 }
 
-function joinRoom(roomCode, socketId, nickname){
+export function joinRoom(roomCode, socketId, nickname){
     if (!rooms[roomCode]) return false;
 
     rooms[roomCode].players[socketId] = {nickname};
     return true;
 }
 
-function leaveRoom(roomCode, socketId){
+export function leaveRoom(roomCode, socketId){
     if (!rooms[roomCode]) return;
     
     delete rooms[roomCode].players[socketId];
@@ -29,5 +29,3 @@ function leaveRoom(roomCode, socketId){
         delete rooms[roomCode];
     }
 }
-
-module.exports = {rooms, createRoom, joinRoom, leaveRoom};

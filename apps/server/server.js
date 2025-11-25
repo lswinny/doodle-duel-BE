@@ -1,14 +1,7 @@
-// io (server side)
-
-// Broadcast to everyone
-// Send to a room
-// Manage all connections
-// Check who’s connected
-
-const http = require('http');
-const { Server } = require('socket.io');
-const app = require('./app');
-const registerHandlers = require("./socket-handlers")
+import http from 'http';
+import { Server } from 'socket.io';
+import app from './app.js';
+import registerHandlers from './socket-handlers.js';
 
 const server = http.createServer(app);
 

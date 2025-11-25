@@ -2,13 +2,15 @@
   "name": "@backend/source",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "server": "nx serve server",
     "all": "nx run-many --target=serve --projects=server,server2 --parallel"
   },
   "private": true,
   "dependencies": {
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@nx/js": "22.1.1",

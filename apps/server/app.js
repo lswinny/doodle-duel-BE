@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const app = express();
 
 app.get('/api/user');
 
-module.exports = app;
+export default app;

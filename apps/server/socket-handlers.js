@@ -1,19 +1,9 @@
-// socket (server side) - "CONTROLLER"
-// Socket.on etc:
-// Listen for events from that one user
-// Send data to that one user
-// Access their socket.id
-// Handle disconnects
-// Authentication:
+import { checkIfTokenIsValid } from './utils/auth.js';
+import { generateRoomCode } from './utils/roomCode.js';
 
+import { createRoom, joinRoom, leaveRoom } from'./roomManager.js';
 
-import socket from '../../../doodle-duel-FE/doodle-duel-ReactFE/src/socket';
-import { checkIfTokenIsValid, createNewUserToken } from './utils/auth';
-import { generateRoomCode } from './utils/roomCode';
-
-const { rooms, createRoom, joinRoom, leaveRoom } = require('./roomManager');
-
-function registerHandlers(io, socket) {
+export default function registerHandlers(io, socket) {
 
   socket.on("set-nickname", ({nickname}) => {
     const token = jwt.sign({nickname}, SECRET);
@@ -21,30 +11,26 @@ function registerHandlers(io, socket) {
   })
 
   socket.on('create-room', ({ token }) => { 
-    const userData = checkIfTokenIsValid(token);
+  const userData = checkIfTokenIsValid(token);
   if (!userData) {
   socket.emit('Invalid or expired token')
   return;
     }
      const roomCode = generateRoomCode(); 
-     createRoom(roomCode, socket.id); // room code generated above, socket.id = the hosts socket id
-     socket.emit('roomCreated', roomCode); //'roomCreated' = an 'event'
+     createRoom(roomCode, socket.id);
+     socket.emit('roomCreated', roomCode);
   })
 
-  socket.on('join-room', ({ roomCode, nickname }) => {
-    if (!rooms[roomCode]) {
-return
-    }
-
-    // Add player
+  socket.on('join-room', ({ roomCode, nickname, token }) => {
+    const userData = checkIfTokenIsValid(token);
+  if (!userData) {
+  socket.emit('Invalid or expired token')
+  return;
+  }
+    if (!rooms[roomCode]) return
     joinRoom(roomCode, socket.id, nickname);
-
-    // Join the socket.io room
     socket.join(roomCode);
-
-    // Notify others
     io.to(roomCode).emit('player-list', rooms[roomCode].players);
-
     console.log(`${nickname} joined room ${roomCode}`);
   });
 
@@ -71,7 +57,3 @@ return
 //     io.emit('chat message', msg);
 //   });
 }
-
-module.exports = registerHandlers;
-
-module.exports = registerHandlers;
