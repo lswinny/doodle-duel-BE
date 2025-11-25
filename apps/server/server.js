@@ -20,6 +20,11 @@ io.on('connection', (socket) => {
     io.emit('chat message', msg);
   });
 
+  socket.on('draw', (data) => {
+    console.log(':pencil2: draw event from', socket.id, data);
+    socket.broadcast.emit('draw', data);
+  });
+
   socket.on('disconnect', () => {
     console.log('❌ User disconnected', socket.id);
   });
