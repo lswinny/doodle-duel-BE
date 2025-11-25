@@ -1,7 +1,14 @@
-// server.js
+// io (server side)
+
+// Broadcast to everyone
+// Send to a room
+// Manage all connections
+// Check who’s connected
+
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./app');
+const registerHandlers = require("./socket-handlers")
 
 const server = http.createServer(app);
 
@@ -12,25 +19,11 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-  console.log('🔌 A user connected', socket.id);
-
-  socket.on('chat message', (msg) => {
-    console.log('message from client:', msg);
-
-    io.emit('chat message', msg);
-  });
-
-  socket.on('draw', (data) => {
-    console.log(':pencil2: draw event from', socket.id, data);
-    socket.broadcast.emit('draw', data);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('❌ User disconnected', socket.id);
-  });
+  console.log('A user connected', socket.id);
+  registerHandlers(io, socket);
 });
 
 const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
