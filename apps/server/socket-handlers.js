@@ -1,6 +1,6 @@
-import { checkIfTokenIsValid } from './utils/auth.js';
+import jwt from "jsonwebtoken";
+import { SECRET, checkIfTokenIsValid } from './utils/auth.js';
 import { generateRoomCode } from './utils/roomCode.js';
-
 import { createRoom, joinRoom, leaveRoom } from'./roomManager.js';
 
 export default function registerHandlers(io, socket) {
