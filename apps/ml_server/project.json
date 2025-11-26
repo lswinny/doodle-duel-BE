@@ -1,10 +1,10 @@
 {
-  "name": "server",
+  "name": "ml_server",
   "targets": {
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm run dev --prefix apps/server"
+        "command": "fastapi dev apps/ml_server/main.py"
       }
     }
   }

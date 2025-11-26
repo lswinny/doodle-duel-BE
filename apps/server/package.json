@@ -1,13 +1,14 @@
 {
   "name": "server",
+  "private": true,
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "listen.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "nodemon listen.js"
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "express": "^5.1.0",

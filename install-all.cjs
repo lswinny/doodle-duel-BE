@@ -17,6 +17,7 @@ const appsDirs = fs.readdirSync(appDir);
 appsDirs.forEach((app) => {
   const appPath = path.join(appDir, app);
   const packageJson = path.join(appPath, 'package.json');
+  const requirementsTxt = path.join(appPath, 'requirements.txt');
 
   if (fs.existsSync(packageJson)) {
     console.log(`Package.json found in Folder: ${app}`);
@@ -26,5 +27,12 @@ appsDirs.forEach((app) => {
     });
 
     console.log('\n Install Successful \n');
+  } else if (fs.existsSync(requirementsTxt)) {
+    console.log(`Pyhton Project identified ${app}`);
+    execSync(`pip install requirements.txt`, {
+      stdio: 'inherit',
+      appPath,
+      shell: true,
+    });
   }
 });
