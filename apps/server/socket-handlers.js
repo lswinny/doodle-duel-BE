@@ -18,6 +18,7 @@ export default function registerHandlers(io, socket) {
     }
      const roomCode = generateRoomCode(); 
      createRoom(roomCode, socket.id);
+     io.emit("lobby:rooms-updated", rooms)
      socket.emit('roomCreated', roomCode);
   })
 
@@ -36,6 +37,7 @@ export default function registerHandlers(io, socket) {
     socket.join(roomCode);
     io.to(roomCode).emit('player-list', rooms[roomCode].players);
     console.log(`${nickname} joined room ${roomCode}`);
+    io.emit("lobby:rooms-updated", rooms);
   });
 
   socket.on('draw', (data) => {
