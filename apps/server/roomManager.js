@@ -1,8 +1,7 @@
 import { generateRoomCode } from "./utils/roomCode.js";
 
 // "MODEL" (rather than "Controller" - socket-handler)
-const rooms = {};
-const roomCode = generateRoomCode()
+export const rooms = {};
 
 export function createRoom(roomCode, hostId) {
     rooms[roomCode] = {

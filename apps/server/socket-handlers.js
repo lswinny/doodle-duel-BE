@@ -1,43 +1,46 @@
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 import { SECRET, checkIfTokenIsValid } from './utils/auth.js';
 import { generateRoomCode } from './utils/roomCode.js';
-import { createRoom, joinRoom, leaveRoom } from'./roomManager.js';
+import { rooms, createRoom, joinRoom, leaveRoom } from './roomManager.js';
 
 export default function registerHandlers(io, socket) {
+  socket.on('set-nickname', ({ nickname }) => {
+    const token = jwt.sign({ nickname }, SECRET);
+    socket.emit('token', { token });
+  });
 
-  socket.on("set-nickname", ({nickname}) => {
-    const token = jwt.sign({nickname}, SECRET);
-    socket.emit("token", {token});
-  })
-
-  socket.on('create-room', ({ token }) => { 
-  const userData = checkIfTokenIsValid(token);
-  if (!userData) {
-  socket.emit('Invalid or expired token')
-  return;
+  socket.on('create-room', ({ token }) => {
+    const userData = checkIfTokenIsValid(token);
+    if (!userData) {
+      socket.emit('Invalid or expired token');
+      return;
     }
-     const roomCode = generateRoomCode(); 
-     createRoom(roomCode, socket.id);
-     io.emit("lobby:rooms-updated", rooms)
-     socket.emit('roomCreated', roomCode);
-  })
+    const roomCode = generateRoomCode();
+    createRoom(roomCode, socket.id);
+    io.emit('lobby:rooms-updated', Object.keys(rooms));
+    socket.emit('roomCreated', roomCode);
+  });
+
+  socket.on('lobby:join', () => {
+    socket.emit('lobby:rooms-updated', Object.keys(rooms));
+  });
 
   socket.on('join-room', ({ roomCode, nickname, token }) => {
     const userData = checkIfTokenIsValid(token);
-  if (!userData) {
-  socket.emit('Invalid or expired token')
-  return;
-  }
+    if (!userData) {
+      socket.emit('Invalid or expired token');
+      return;
+    }
     if (!rooms[roomCode]) {
-      socket.emit("error", "Room not found")
-      return
+      socket.emit('error', 'Room not found');
+      return;
     }
 
     joinRoom(roomCode, socket.id, nickname);
     socket.join(roomCode);
     io.to(roomCode).emit('player-list', rooms[roomCode].players);
     console.log(`${nickname} joined room ${roomCode}`);
-    io.emit("lobby:rooms-updated", rooms);
+    io.emit('lobby:rooms-updated', Object.keys(rooms));
   });
 
   socket.on('draw', (data) => {
