@@ -16,7 +16,9 @@ export default function registerHandlers(io, socket) {
       return;
     }
     const roomCode = generateRoomCode();
-    createRoom(roomCode, socket.id);
+    createRoom(roomCode, socket.id, userData.nickname);
+    socket.join(roomCode);
+
     io.emit('lobby:rooms-updated', Object.keys(rooms));
     socket.emit('roomCreated', roomCode);
   });
@@ -48,21 +50,29 @@ export default function registerHandlers(io, socket) {
     socket.broadcast.emit('draw', data);
   });
 
-  // Testing event connection
-  // socket.on('test-event', (data) => {
-  //   console.log('Received from client:', data);
-  //   socket.emit('test-response', {reply: 'Hello client!'})
-  // })
+socket.on('disconnect', () => {
+  for (const code in rooms) {
+    const room = rooms[code];
 
-  socket.on('disconnect', () => {
-    // remove player from all rooms
-    for (const code in rooms) {
-      if (rooms[code].players[socket.id]) {
+    if (room.players[socket.id]) {
+      if (room.hostId === socket.id) {
+        // Host left, close room
+        delete rooms[code];
+        io.to(code).emit('roomClosed', { roomCode: code });
+        socket.leave(code);
+        io.emit('lobby:rooms-updated', Object.keys(rooms));
+        console.log(`Host left, room ${code} closed`);
+      } else {
+        // Regular player left
         leaveRoom(code, socket.id);
-
-        io.to(code).emit('player-list', rooms[code]?.players || {});
+        io.to(code).emit('player-list', {
+          players: room.players,
+          hostId: room.hostId
+        });
+        console.log(`Player left room ${code}`);
       }
     }
-    console.log('User disconnected', socket.id);
-  });
+  }
+});
+
 }
