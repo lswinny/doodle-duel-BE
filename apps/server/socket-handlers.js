@@ -7,9 +7,8 @@ import {
   leaveRoom,
   addSubmission,
   judgeRoomSubmissions,
-  rooms
-} from "./roomManager.js";
-
+  rooms,
+} from './roomManager.js';
 
 export default function registerHandlers(io, socket) {
   socket.on('set-nickname', ({ nickname }) => {
@@ -42,7 +41,7 @@ export default function registerHandlers(io, socket) {
       return;
     }
 
-    const room = rooms[roomCode]
+    const room = rooms[roomCode];
     if (!room) {
       socket.emit('error', 'Room not found');
       return;
@@ -55,47 +54,60 @@ export default function registerHandlers(io, socket) {
       roomCode,
       host: room.host,
       players: room.players,
-      submissions: room.submissions
+      submissions: room.submissions,
     });
     console.log(`${nickname} joined room ${roomCode}`);
     io.emit('lobby:rooms-updated', Object.keys(rooms));
   });
 
-  socket.on("get-room-data", ({roomCode}) => {
+  socket.on('get-room-data', ({ roomCode }) => {
     const room = rooms[roomCode];
 
-    if(!room){
-      socket.emit("room:data", null);
+    if (!room) {
+      socket.emit('room:data', null);
       return;
     }
 
-    socket.emit("room:data", {
+    socket.emit('room:data', {
       host: room.host,
       players: room.players,
-      submissions: room.submissions
-    })
-  })
+      submissions: room.submissions,
+    });
+  });
 
-  socket.on("start-game", ({roomCode, token}) => {
+  socket.on('start-game', ({ roomCode, token, duration = 30 }) => {
     const userData = checkIfTokenIsValid(token);
-    if(!userData){
-      socket.emit("Invalid or expired token");
+    if (!userData) {
+      socket.emit('Invalid or expired token');
       return;
     }
 
     const room = rooms[roomCode];
-    if(!room){
-      socket.emit("error", "Room not found");
+    if (!room) {
+      socket.emit('error', 'Room not found');
       return;
     }
 
-    if (socket.id !== room.host){
-      socket.emit("error","Only the host can start the game");
+    if (socket.id !== room.host) {
+      socket.emit('error', 'Only the host can start the game');
       return;
     }
 
-    io.to(roomCode).emit("game-started", {roomCode,roomData: {...room}});
-  })
+    io.to(roomCode).emit('game-started', { roomCode, roomData: { ...room } });
+    let timeLeft = duration;
+    io.to(roomCode).emit('round:start', { duration });
+
+    const interval = setInterval(() => {
+      timeLeft = timeLeft - 1;
+      io.to(roomCode).emit('round:countdown', { timeLeft });
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        io.to(roomCode).emit('round:ended');
+        // Trigger judging or put next-round setup here
+      }
+    }, 1000);
+  });
 
   // socket.on('draw', (data) => {
   //   console.log(':pencil2: draw event from', socket.id, data);
@@ -107,7 +119,7 @@ export default function registerHandlers(io, socket) {
       const room = rooms[code];
 
       if (room.players[socket.id]) {
-        if (room.hostId === socket.id) {
+        if (room.host === socket.id) {
           // Host left, close room
           delete rooms[code];
           io.to(code).emit('roomClosed', { roomCode: code });
@@ -127,29 +139,29 @@ export default function registerHandlers(io, socket) {
     }
   });
 
-
-  socket.on("submit-drawing", ({ roomCode, imageData }) => {
+  socket.on('submit-drawing', ({ roomCode, imageData }) => {
     if (!roomCode || !imageData) {
-      console.warn("submit-drawing called without roomCode or imageData");
+      console.warn('submit-drawing called without roomCode or imageData');
       return;
     }
-  
+
     const ok = addSubmission(roomCode, socket.id, imageData);
     if (!ok) {
-      socket.emit("error", { message: "Room not found when submitting drawing" });
+      socket.emit('error', {
+        message: 'Room not found when submitting drawing',
+      });
       return;
     }
-  
+
     console.log(`Submission stored for room ${roomCode}, socket ${socket.id}`);
   });
 
-
-  socket.on("judge-round", async ({ roomCode, promptId }) => {
+  socket.on('judge-round', async ({ roomCode, promptId }) => {
     try {
       const result = await judgeRoomSubmissions(roomCode, promptId);
-  
+
       // Broadcast the winner and scores to everyone in the room
-      io.to(roomCode).emit("round-result", {
+      io.to(roomCode).emit('round-result', {
         prompt: result.prompt,
         winnerSocketId: result.winnerSocketId,
         scores: result.scores,
@@ -157,13 +169,11 @@ export default function registerHandlers(io, socket) {
         error: result.error,
       });
     } catch (err) {
-      console.error("Error during AI judging:", err.message);
-      socket.emit("error", {
-        message: "Could not judge round",
+      console.error('Error during AI judging:', err.message);
+      socket.emit('error', {
+        message: 'Could not judge round',
         details: err.message,
       });
     }
   });
-  
-  
 }
