@@ -16,7 +16,7 @@ export function createRoom(roomCode, hostId, nickname) {
     rooms[roomCode] = {
         host: hostId,
         players: {[hostId]: {nickname}},    //{socketId: {nickname}}
-        submissions: []
+        submissions: [],
     };
 }
 
