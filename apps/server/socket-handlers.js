@@ -21,7 +21,7 @@ export default function registerHandlers(io, socket) {
     socket.emit('token', { token });
   });
 
-  socket.on('create-room', ({ token }) => {
+  socket.on('create-room', ({ token, prompt, category }) => {
     const userData = checkIfTokenIsValid(token);
     if (!userData) {
       socket.emit('Invalid or expired token');
