@@ -87,12 +87,12 @@ export default function registerHandlers(io, socket) {
       socket.emit('error', 'Room not found');
       return;
     }
-
+  
     if (socket.id !== room.host) {
       socket.emit('error', 'Only the host can start the game');
       return;
     }
-
+    console.log("START GAME RECEIVED ON SERVER")
     io.to(roomCode).emit('game-started', { roomCode, roomData: { ...room } });
     let timeLeft = duration;
     io.to(roomCode).emit('round:start', { duration });
@@ -100,6 +100,7 @@ export default function registerHandlers(io, socket) {
     const interval = setInterval(() => {
       timeLeft = timeLeft - 1;
       io.to(roomCode).emit('round:countdown', { timeLeft });
+      console.log("TICK room", roomCode, "timeLeft", timeLeft);
 
       if (timeLeft <= 0) {
         clearInterval(interval);
