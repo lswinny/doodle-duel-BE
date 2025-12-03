@@ -25,7 +25,12 @@ def confidence_rating(data:ClipRequest):
     pil_image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
 
     image_tensor = preprocess(pil_image).unsqueeze(0).to(device)
-    text_tokens = clip.tokenize([data.prompt]).to(device)
+    prompts = [
+        data.prompt,
+        "A doodle sketch of " + data.prompt,
+        "A sketch of " + data.prompt
+    ]
+    text_tokens = clip.tokenize(prompts).to(device)
 
     with torch.no_grad():
         image_features = model.encode_image(image_tensor)
