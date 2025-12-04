@@ -23,7 +23,7 @@ export default function registerHandlers(io, socket) {
     socket.emit('token', { token });
   });
 
-  socket.on('create-room', ({ token, prompt, category }) => {
+  socket.on('create-room', ({ token }) => {
     const userData = checkIfTokenIsValid(token);
     if (!userData) {
       socket.emit('Invalid or expired token');
@@ -85,7 +85,7 @@ export default function registerHandlers(io, socket) {
   socket.on('start-game', ({ roomCode, token, duration = 30 }) => {
     const userData = checkIfTokenIsValid(token);
     if (!userData) {
-      socket.emit('Invalid or expired token');
+      socket.emit('error', 'Invalid or expired token');
       return;
     }
 
@@ -101,20 +101,36 @@ export default function registerHandlers(io, socket) {
 
     console.log('START GAME RECEIVED ON SERVER');
     io.to(roomCode).emit('game-started', { roomCode, roomData: { ...room } });
+
     const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-    io.to(roomCode).emit('round:start', {
-      duration,
-      prompt: randomPrompt.prompt,
-      promptId: randomPrompt.id,
-      category: randomPrompt.category,
-    });
 
-    // let timeLeft = duration;
+    let preCount = 3;
+    const preInterval = setInterval(() => {
+      io.to(roomCode).emit('round:precountdown', {
+        count: preCount,
+        prompt: randomPrompt.prompt,
+        category: randomPrompt.category,
+        promptId: randomPrompt.id,
+        duration,
+      });
+      preCount = preCount - 1;
 
-    // const interval = setInterval(() => {
-    //   timeLeft = timeLeft - 1;
-    //   io.to(roomCode).emit('round:countdown', { timeLeft });
-    //   console.log("TICK room", roomCode, "timeLeft", timeLeft);
+      if (preCount < 0) {
+        clearInterval(preInterval);
+        room.currentPrompt = randomPrompt.prompt;
+        io.to(roomCode).emit('round:start', {
+          duration,
+          prompt: randomPrompt.prompt,
+          promptId: randomPrompt.id,
+          category: randomPrompt.category,
+        });
+
+        let timeLeft = duration;
+
+        const interval = setInterval(() => {
+          timeLeft = timeLeft - 1;
+          io.to(roomCode).emit('round:countdown', { timeLeft });
+          console.log('TICK room', roomCode, 'timeLeft', timeLeft);
 
           if (timeLeft <= 0) {
             clearInterval(interval);
