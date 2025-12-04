@@ -39,7 +39,7 @@ export async function judgeDrawingsWithAI(prompt, submissions) {
       console.log(data);
       return {
         playerName,
-        image: image,
+        image: binaryToBase64(image.buffer),
         image_index: index,
         score: Number(data.confidence_percent) || 0,
       };
