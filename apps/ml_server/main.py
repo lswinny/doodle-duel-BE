@@ -1,49 +1,28 @@
-from fastapi import FastAPI
-import base64
-import io
-import torch
-import clip
 from PIL import Image
-from pydantic import BaseModel
+import torch
+from torchvision import transforms
+from transformers import AutoModelForImageClassification, AutoImageProcessor
 
-app = FastAPI()
+model_name = "WinKawaks/SketchXAI-Base-QuickDraw345"
+# Load model
+model = AutoModelForImageClassification.from_pretrained(model_name)
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/32", device=device)
+# Your transform (SketchXAI expects 224×224 grayscale normalized)
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),              # shape: [1, H, W]
+    transforms.Normalize(mean=[0.5], std=[0.5])
+])
 
-class ClipRequest(BaseModel):
-    prompt: str
-    image: str
+# Load and preprocess image
+image = Image.open("elephant.jpeg").convert("L")
+image = image.convert("RGB")
+tensor = transform(image).unsqueeze(0)  # shape [1, 1, 224, 224]
 
-@app.get("/")
-async def root():
-    return {"message": "Hello From ML_Server"}
+with torch.no_grad():
+    outputs = model(tensor)
+    probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    confidence, pred_class = torch.max(probs, dim=1)
 
-@app.post("/score-image")
-def confidence_rating(data:ClipRequest):
-    img_bytes = base64.b64decode(data.image)
-    pil_image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-
-    image_tensor = preprocess(pil_image).unsqueeze(0).to(device)
-    prompts = [
-        data.prompt,
-        "A doodle sketch of " + data.prompt,
-        "A sketch of " + data.prompt
-    ]
-    text_tokens = clip.tokenize(prompts).to(device)
-
-    with torch.no_grad():
-        image_features = model.encode_image(image_tensor)
-        text_features = model.encode_text(text_tokens)
-
-    similarity = torch.cosine_similarity(image_features, text_features)[0].item()
-    print(similarity)
-    confidence = max(0, similarity)
-
-
-    return {
-        "prompt": data.prompt,
-        "confidence": confidence,
-        "confidence_percent": round(confidence * 100, 2)
-    }
-
+print("Prediction:", model.config.id2label[pred_class.item()])
+print("Confidence:", confidence.item())
