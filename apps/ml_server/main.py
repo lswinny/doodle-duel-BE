@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import base64
 import io
 import torch
@@ -7,6 +8,14 @@ from PIL import Image
 from pydantic import BaseModel
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = ["*"],
+    allow_credentials = True,
+    allow_methods = ["GET", "POST"],
+    allow_headers= ["*"],
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/32", device=device)
@@ -39,7 +48,6 @@ def confidence_rating(data:ClipRequest):
     similarity = torch.cosine_similarity(image_features, text_features)[0].item()
     print(similarity)
     confidence = max(0, similarity)
-
 
     return {
         "prompt": data.prompt,

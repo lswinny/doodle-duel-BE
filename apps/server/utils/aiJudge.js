@@ -35,6 +35,7 @@ export async function judgeDrawingsWithAI(prompt, images) {
 
       const data = await res.json();
       return {
+        image: image,
         image_index: index,
         score: Number(data.percentage) || 0,
       };
