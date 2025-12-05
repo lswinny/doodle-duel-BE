@@ -19,7 +19,6 @@ export function createRoom(roomCode, hostId, nickname) {
 }
 
 export function findRoom(roomCode) {
-  console.log(rooms);
   const room = rooms[roomCode];
   return room ? true : false;
 }
@@ -107,8 +106,6 @@ export async function judgeRoomSubmissions(room) {
     isFallback: result.isFallback,
     error: result.error,
   };
-
-  console.log(results);
 
   // The judge implementation from the 'main' branch includes emitting the results
   if (roomCode) {

@@ -5,8 +5,6 @@ import fs from 'fs';
 import {
   createRoom,
   joinRoom,
-  leaveRoom,
-  addSubmission,
   judgeRoomSubmissions,
   rooms,
   startNewRound,
@@ -48,7 +46,6 @@ const preCountDown = (io, roomCode, duration, room) => {
       const interval = setInterval(() => {
         timeLeft = timeLeft - 1;
         io.to(roomCode).emit('round:countdown', { timeLeft });
-        console.log('TICK room', roomCode, 'timeLeft', timeLeft);
 
         if (timeLeft <= 0) {
           clearInterval(interval);
@@ -154,16 +151,9 @@ export default function registerHandlers(io, socket) {
       socket.emit('error', 'Room not found');
       return;
     }
-    
+
     preCountDown(io, roomCode, data.duration, data.room);
-
-    // io.to(roomCode).emit('round:start', data);
   });
-
-  // socket.on('draw', (data) => {
-  //   console.log(':pencil2: draw event from', socket.id, data);
-  //   socket.broadcast.emit('draw', data);
-  // });
 
   socket.on('disconnect', () => {
     for (const roomCode in rooms) {
@@ -207,23 +197,6 @@ export default function registerHandlers(io, socket) {
     }
 
     socket.leave(roomCode);
-  });
-
-  socket.on('submit-drawing', ({ roomCode, imageData }) => {
-    if (!roomCode || !imageData) {
-      console.warn('submit-drawing called without roomCode or imageData');
-      return;
-    }
-
-    const ok = addSubmission(roomCode, socket.id, imageData);
-    if (!ok) {
-      socket.emit('error', {
-        message: 'Room not found when submitting drawing',
-      });
-      return;
-    }
-
-    console.log(`Submission stored for room ${roomCode}, socket ${socket.id}`);
   });
 
   socket.on('judge-round', async ({ roomCode, promptId }) => {

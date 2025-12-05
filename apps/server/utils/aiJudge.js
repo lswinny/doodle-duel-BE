@@ -3,20 +3,12 @@ const AI_SERVER_URL =
   'https://edmund-overjoyful-recreantly.ngrok-free.dev';
 import binaryToBase64 from './binarytob64.js';
 
-/**
- * Call the AI server with a prompt and a set of images.
- *
- * @param {string} prompt - e.g. "Cat"
- * @param {string[]} images - data URL strings for each player's drawing
- * @returns {Promise<{ scores: { image_index: number, score: number }[], winnerIndex: number, isFallback: boolean }>}
- */
 export async function judgeDrawingsWithAI(prompt, submissions) {
   if (!prompt || !Array.isArray(submissions) || submissions.length === 0) {
     throw new Error('judgeDrawingsWithAI called without prompt or submissions');
   }
 
   try {
-    // Build a scoring function for ONE image
     async function scoreSingleImage(image, index, playerName) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);

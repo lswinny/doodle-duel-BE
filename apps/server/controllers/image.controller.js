@@ -1,4 +1,5 @@
 import { addSubmission, findRoom } from '../roomManager.js';
+import binaryToBase64 from '../utils/binarytob64.js';
 
 export async function uploadImage(req, res) {
   if (!req.body) {
